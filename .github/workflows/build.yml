@@ -40,7 +40,7 @@ jobs:
         xcrun simctl boot "iPhone 16" 2>/dev/null || true
         
         # 2. 等待模拟器启动
-        sleep 10
+        sleep 30
         
         # 3. 安装应用到模拟器
         APP_PATH=$(find ./build-output -name "*.app" -type d | head -1)
