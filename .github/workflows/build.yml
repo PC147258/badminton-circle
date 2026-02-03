@@ -20,12 +20,15 @@ jobs:
     - name: Show Xcode Version
       run: xcodebuild -version
     
+    - name: List Available Schemes
+      run: xcodebuild -list -project "badminton circle.xcodeproj"
+    
     - name: Build Project
       run: |
         xcodebuild clean build \
         -project "badminton circle.xcodeproj" \
-        -scheme "badminton circle" \
-        -destination 'platform=iOS Simulator' \
+        -scheme "badminton-circle" \
+        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGNING_ALLOWED=NO
     
