@@ -26,15 +26,15 @@ jobs:
     - name: Build Project
       run: |
         xcodebuild clean build \
-        -project "badminton circle.xcodeproj" \
-        -scheme "badminton-circle" \
-        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-        -derivedDataPath ./build-output \        
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO
+          -project "badminton circle.xcodeproj" \
+          -scheme "badminton-circle" \
+          -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
+          -derivedDataPath ./build-output \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
     
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: BadmintonCircle-App
-        path: build-output/Build/Products/*/badminton-circle.app  
+        path: build-output/Build/Products/*/badminton-circle.app
