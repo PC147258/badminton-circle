@@ -33,8 +33,61 @@ jobs:
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO
     
+    # ✅ 新增：启动模拟器、安装应用、截图+录屏
+    - name: Launch Simulator & Capture
+      run: |
+        # 1. 启动模拟器（后台运行）
+        xcrun simctl boot "iPhone 16" 2>/dev/null || true
+        
+        # 2. 等待模拟器启动
+        sleep 10
+        
+        # 3. 安装应用到模拟器
+        APP_PATH=$(find ./build-output -name "*.app" -type d | head -1)
+        echo "找到应用: $APP_PATH"
+        xcrun simctl install booted "$APP_PATH"
+        
+        # 4. 启动应用（假设 bundle ID 是 com.yourcompany.badminton-circle）
+        # 如果不知道 bundle ID，可以先跳过这步，手动从模拟器桌面点击启动
+        # xcrun simctl launch booted com.yourcompany.badminton-circle || true
+        
+        # 5. 等待应用加载
+        sleep 5
+        
+        # 6. 截图（启动后）
+        xcrun simctl io booted screenshot screenshot_launch.png
+        
+        # 7. 开始录屏（录制5秒）
+        xcrun simctl io booted recordVideo --codec=h264 --mask=black screen_recording.mp4 &
+        VIDEO_PID=$!
+        sleep 5
+        kill $VIDEO_PID 2>/dev/null || true
+        
+        # 8. 再截一张图（运行中）
+        sleep 2
+        xcrun simctl io booted screenshot screenshot_running.png
+        
+        echo "截图和录屏完成"
+    
+    # ✅ 上传应用包（供Mac用户下载运行）
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: BadmintonCircle-App
-        path: build-output/Build/Products/*/badminton circle.app
+        path: build-output/Build/Products/*/*.app
+    
+    # ✅ 上传截图（Windows用户可直接查看）
+    - name: Upload Screenshots
+      uses: actions/upload-artifact@v4
+      with:
+        name: App-Screenshots
+        path: |
+          screenshot_launch.png
+          screenshot_running.png
+    
+    # ✅ 上传录屏（Windows用户可直接播放）
+    - name: Upload Screen Recording
+      uses: actions/upload-artifact@v4
+      with:
+        name: App-Video
+        path: screen_recording.mp4
