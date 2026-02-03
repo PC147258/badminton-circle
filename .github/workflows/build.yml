@@ -51,7 +51,7 @@ jobs:
         xcrun simctl launch booted com.yourcompany.badminton-circle || true
         
         # 5. ✅ 等待30秒后截图（应用已运行30秒）
-        sleep 30
+        sleep 60
         xcrun simctl io booted screenshot screenshot_10s.png
         
         # 6. 再截一张图（12秒时）
