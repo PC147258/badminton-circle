@@ -33,59 +33,84 @@ jobs:
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO
     
-    # ✅ 新增：启动模拟器、安装应用、截图+录屏
+    # ✅ 修正：改进模拟器启动和录屏逻辑
     - name: Launch Simulator & Capture
       run: |
-        # 1. 启动模拟器（后台运行）
-        xcrun simctl boot "iPhone 16" 2>/dev/null || true
-        
-        # 2. 等待模拟器启动
-        sleep 10
-        
-        # 3. 安装应用到模拟器
+        # 1. 找到生成的 .app 路径
         APP_PATH=$(find ./build-output -name "*.app" -type d | head -1)
         echo "找到应用: $APP_PATH"
+        
+        # 2. 启动模拟器（使用 Boot 模式，确保完全启动）
+        echo "启动 iPhone 16 模拟器..."
+        xcrun simctl boot "iPhone 16"
+        
+        # 3. 等待模拟器完全启动
+        echo "等待模拟器启动..."
+        sleep 15
+        
+        # 4. 安装应用
+        echo "安装应用..."
         xcrun simctl install booted "$APP_PATH"
         
-        # 4. 启动应用（假设 bundle ID 是 com.yourcompany.badminton-circle）
-        # 如果不知道 bundle ID，可以先跳过这步，手动从模拟器桌面点击启动
-        # xcrun simctl launch booted com.yourcompany.badminton-circle || true
+        # 5. 启动应用（从桌面点击启动，更稳定）
+        echo "启动应用..."
+        # 尝试获取 bundle ID 并启动
+        BUNDLE_ID=$(plutil -extract CFBundleIdentifier raw "$APP_PATH/Info.plist" 2>/dev/null || echo "")
+        if [ -n "$BUNDLE_ID" ]; then
+          echo "Bundle ID: $BUNDLE_ID"
+          xcrun simctl launch booted "$BUNDLE_ID" &
+        else
+          echo "未找到 Bundle ID，请手动从模拟器桌面点击启动"
+        fi
         
-        # 5. 等待应用加载
+        # 6. ✅ 等待 5 秒后截图（应用已运行）
+        echo "等待 5 秒后截图..."
         sleep 5
+        xcrun simctl io booted screenshot screenshot_5s.png
+        echo "✅ 已截图：screenshot_5s.png"
         
-        # 6. 截图（启动后）
-        xcrun simctl io booted screenshot screenshot_launch.png
+        # 7. ✅ 再等待 3 秒，截第二张图（8秒时）
+        sleep 3
+        xcrun simctl io booted screenshot screenshot_8s.png
+        echo "✅ 已截图：screenshot_8s.png"
         
-        # 7. 开始录屏（录制5秒）
-        xcrun simctl io booted recordVideo --codec=h264 --mask=black screen_recording.mp4 &
-        VIDEO_PID=$!
-        sleep 5
-        kill $VIDEO_PID 2>/dev/null || true
+        # 8. ✅ 开始录屏（使用 timeout 控制时长）
+        echo "开始录屏 10 秒..."
+        timeout 10s xcrun simctl io booted recordVideo screen_recording.mp4 || true
         
-        # 8. 再截一张图（运行中）
-        sleep 2
-        xcrun simctl io booted screenshot screenshot_running.png
+        # 检查视频文件大小
+        if [ -f "screen_recording.mp4" ]; then
+          VIDEO_SIZE=$(stat -f%z "screen_recording.mp4" 2>/dev/null || stat -c%s "screen_recording.mp4" 2>/dev/null || echo "0")
+          echo "视频文件大小: $VIDEO_SIZE 字节"
+          if [ "$VIDEO_SIZE" -lt 1000 ]; then
+            echo "⚠️ 视频文件太小，可能录制失败"
+          else
+            echo "✅ 视频录制成功"
+          fi
+        else
+          echo "❌ 视频文件未生成"
+        fi
         
-        echo "截图和录屏完成"
+        # 9. 关闭模拟器（可选）
+        xcrun simctl shutdown booted 2>/dev/null || true
     
-    # ✅ 上传应用包（供Mac用户下载运行）
+    # ✅ 上传应用包
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: BadmintonCircle-App
         path: build-output/Build/Products/*/*.app
     
-    # ✅ 上传截图（Windows用户可直接查看）
+    # ✅ 上传截图（多张）
     - name: Upload Screenshots
       uses: actions/upload-artifact@v4
       with:
         name: App-Screenshots
         path: |
-          screenshot_launch.png
-          screenshot_running.png
+          screenshot_5s.png
+          screenshot_8s.png
     
-    # ✅ 上传录屏（Windows用户可直接播放）
+    # ✅ 上传录屏
     - name: Upload Screen Recording
       uses: actions/upload-artifact@v4
       with:
