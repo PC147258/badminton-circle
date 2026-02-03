@@ -40,7 +40,7 @@ jobs:
         xcrun simctl boot "iPhone 16" 2>/dev/null || true
         
         # 2. 等待模拟器启动
-        sleep 30
+        sleep 10
         
         # 3. 安装应用到模拟器
         APP_PATH=$(find ./build-output -name "*.app" -type d | head -1)
@@ -50,8 +50,8 @@ jobs:
         # 4. 启动应用（假设 bundle ID 是 com.yourcompany.badminton-circle）
         xcrun simctl launch booted com.yourcompany.badminton-circle || true
         
-        # 5. ✅ 等待10秒后截图（应用已运行10秒）
-        sleep 10
+        # 5. ✅ 等待30秒后截图（应用已运行30秒）
+        sleep 30
         xcrun simctl io booted screenshot screenshot_10s.png
         
         # 6. 再截一张图（12秒时）
