@@ -4,7 +4,7 @@ import AVFoundation
 import Vision
 import UIKit
 
-//  MARK: - 视频播放管理类（满足 ObservableObject 协议，无编译报错）
+//  MARK: - 视频播放管理类
 class VideoPlayerManager: NSObject, ObservableObject {
     // @Published 依赖 Combine 框架，导入后可正常使用
     @Published private var dummy: Bool = false
@@ -14,7 +14,7 @@ class VideoPlayerManager: NSObject, ObservableObject {
     private var notificationObserver: Any?
     
     init(videoURL: URL) {
-        // 配置硬编码视频输出（兼容低版本iOS，启用硬件加速）
+        // 配置硬编码视频输出
         let videoOutputSettings: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: 1920,
@@ -27,7 +27,7 @@ class VideoPlayerManager: NSObject, ObservableObject {
         
         super.init() // 继承 NSObject 必须调用父类初始化
         
-        // 延迟配置currentItem，确保网络视频初始化完成（避免nil）
+        // 延迟配置currentItem，确保网络视频初始化完成
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else {
                 print("警告：currentItem 为 nil，视频输出配置失败")
@@ -59,7 +59,7 @@ class VideoPlayerManager: NSObject, ObservableObject {
     }
 }
 
-//  MARK: - 自定义视频播放器（硬编码帧提取，上半部分展示）
+//  MARK: - 自定义视频播放器）
 struct CustomVideoPlayerView: UIViewRepresentable {
     var player: AVPlayer
     var videoOutput: AVPlayerItemVideoOutput
@@ -76,7 +76,7 @@ struct CustomVideoPlayerView: UIViewRepresentable {
         playerLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(playerLayer)
         
-        // 配置帧提取定时器（30帧/秒，平衡性能与实时性）
+        // 配置帧提取定时器
         context.coordinator.frameExtractionTimer = Timer.scheduledTimer(
             timeInterval: 1/30,
             target: context.coordinator,
@@ -99,7 +99,7 @@ struct CustomVideoPlayerView: UIViewRepresentable {
         Coordinator(self)
     }
     
-    //  MARK: - 协调器（处理帧提取逻辑）
+    //  MARK: - 协调器
     class Coordinator: NSObject {
         var parent: CustomVideoPlayerView
         var frameExtractionTimer: Timer?
@@ -108,7 +108,7 @@ struct CustomVideoPlayerView: UIViewRepresentable {
             self.parent = parent
         }
         
-        // 硬编码提取视频帧（转换为CGImage供Vision检测）
+        // 硬编码提取视频帧
         @objc func extractVideoFrame() {
             let playerItem = parent.player.currentItem
             guard let item = playerItem, parent.videoOutput.hasNewPixelBuffer(forItemTime: item.currentTime()) else {
@@ -126,7 +126,7 @@ struct CustomVideoPlayerView: UIViewRepresentable {
             }
         }
         
-        // 像素缓冲区转换（移除低版本不支持的API，仅保留核心硬件加速）
+        // 像素缓冲区转换
         private func pixelBufferToCGImage(_ pixelBuffer: CVPixelBuffer) -> CGImage? {
             let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
             let context = CIContext(options: [
